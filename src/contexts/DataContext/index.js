@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useMemo,  // Ajout de useMemo
 } from "react";
 
 const DataContext = createContext({});
@@ -19,6 +20,7 @@ export const api = {
 export const DataProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+
   const getData = useCallback(async () => {
     try {
       setData(await api.loadData());
@@ -26,19 +28,21 @@ export const DataProvider = ({ children }) => {
       setError(err);
     }
   }, []);
+
   useEffect(() => {
     if (data) return;
     getData();
   });
+
+  // Utilisation de useMemo pour la valeur du contexte
+  const value = useMemo(() => ({
+    data,
+    error,
+    last: data?.events?.[0]  // On garde le premier événement pour l'instant
+  }), [data, error]);
   
   return (
-    <DataContext.Provider
-      // eslint-disable-next-line react/jsx-no-constructed-context-values
-      value={{
-        data,
-        error,
-      }}
-    >
+    <DataContext.Provider value={value}>
       {children}
     </DataContext.Provider>
   );
